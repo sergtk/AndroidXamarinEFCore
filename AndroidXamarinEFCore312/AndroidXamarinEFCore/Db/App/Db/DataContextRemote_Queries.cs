@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using App.Db.Remote;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,11 +13,6 @@ using ER = App.Db.Entities.Remote;
 
 namespace App.Db
 {
-    /// <summary>
-    /// This file contains direct queries to DB.
-    /// So they are not under security check as it is implemented in Stored Procedures.
-    /// So admin only can execute them.
-    /// </summary>
     public partial class DataContextRemote
     {
 

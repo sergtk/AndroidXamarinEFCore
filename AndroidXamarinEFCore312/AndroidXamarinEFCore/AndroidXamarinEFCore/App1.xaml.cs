@@ -1,10 +1,8 @@
 using System;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
-using AndroidXamarinEFCore.Services;
 using AndroidXamarinEFCore.Views;
 using App.Shared.Utils;
-using App.Db.Remote;
 using ER = App.Db.Entities.Remote;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
@@ -20,19 +18,12 @@ namespace AndroidXamarinEFCore
         public App1()
         {
             InitializeComponent();
-
-            DependencyService.Register<MockDataStore>();
             MainPage = new MainPage();
         }
 
         protected override void OnStart()
         {
             base.OnStart();
-
-            // Cite: "On Android, the OnStart method will be called on rotation as well as when
-            // the application first starts, if the main activity lacks
-            // ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation in the [Activity()] attribute."
-            // Ref: https://docs.microsoft.com/en-us/xamarin/xamarin-forms/app-fundamentals/app-lifecycle
 
             try
             {

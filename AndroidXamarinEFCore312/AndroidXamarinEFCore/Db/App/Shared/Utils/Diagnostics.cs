@@ -27,11 +27,6 @@ namespace App.Shared.Utils
             sb.AppendLine($"{ex.GetType().FullName}");
 
             sb.Append($"Error message: ${ex.Message}");
-            string replaceMsg = GetExceptionMessageReplacement(ex.Message);
-            if (replaceMsg != ex.Message)
-            {
-                sb.Append($" [{replaceMsg}]");
-            }
             sb.AppendLine();
 
             sb.AppendLine($"Stack trace:\n{ex.StackTrace}");
@@ -94,13 +89,6 @@ namespace App.Shared.Utils
             [System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "",
             [System.Runtime.CompilerServices.CallerLineNumber] int sourceLineNumber = 0)
         {
-            if (ex is AppException)
-            {
-                AppException aimEx = ex as AppException;
-                memberName = aimEx.MemberName;
-                sourceFilePath = aimEx.SourceFilePath;
-                sourceLineNumber = aimEx.SourceLineNumber;
-            }
             string msg = $"Error:\n{ExceptionToStringExtended(ex, isHandled, memberName, sourceFilePath, sourceLineNumber)}";
             Debug.WriteLine(msg);
             Console.WriteLine(msg);
@@ -130,147 +118,5 @@ namespace App.Shared.Utils
             Console.WriteLine(str);
         }
 
-        /// <summary>
-        /// It returns error message, mainly skipping useless `AggregateException`.
-        /// </summary>
-        /// <param name="ex"></param>
-        /// <param name="extractInner"></param>
-        /// <returns></returns>
-        private static List<string> ExtractMeaningfulErrorMessages(Exception ex, bool extractInner = false)
-        {
-            List<string> ret = new List<string>();
-            if (ex == null)
-            {
-                return ret;
-            }
-
-            if (ex is AggregateException)
-            {
-                AggregateException ex1 = ex as AggregateException;
-                foreach (Exception exInner in ex1.InnerExceptions)
-                {
-                    List<string> ret1 = ExtractMeaningfulErrorMessages(exInner, extractInner);
-                    ret.AddRange(ret1);
-                }
-            } else
-            {
-                ret.Add(ex.Message);
-                if (extractInner)
-                {
-                    List<string> ret1 = ExtractMeaningfulErrorMessages(ex.InnerException, extractInner);
-                    ret.AddRange(ret1);
-                }
-            }
-            return ret;
-        }
-
-
-        private static readonly Lazy<IDictionary<string, Tuple<int, string>>> exceptionMessageReplacements_ = new Lazy<IDictionary<string, Tuple<int, string>>>(() =>
-            new Dictionary<string, Tuple<int, string>>
-            {
-            }
-        );
-
-
-        /// <summary>
-        /// </summary>
-        /// <param name="srcMsg"></param>
-        /// <returns></returns>
-        private static string GetExceptionMessageReplacement(string srcMsg)
-        {
-            string cur = srcMsg;
-
-            // Strip duplicated message
-            // Ref: https://stackoverflow.com/questions/3707951/sqlexception-message-duplicated-when-calling-sqlserver-stored-proc
-            string msgStripped = cur.Substring(0, (cur.Length - 1) / 2);
-            if ($"{msgStripped}\n{msgStripped}" == cur)
-            {
-                cur = msgStripped;
-            }
-            msgStripped = cur.Substring(0, (cur.Length - 2) / 3);
-            if ($"{msgStripped}\n{msgStripped}\n{msgStripped}" == cur)
-            {
-                cur = msgStripped;
-            }
-
-            Tuple<int, string> dst;
-            bool replace = exceptionMessageReplacements_.Value.TryGetValue(cur, out dst);
-            if (replace)
-            {
-                cur = $"{dst.Item2} (UI code: {dst.Item1})";
-            }
-            return cur;
-        }
-
-
-        /// <summary>
-        /// Compose useful error message from exception passed
-        /// </summary>
-        /// <param name="ex"></param>
-        public static string ComposeErrorMessage(Exception ex)
-        {
-            const int MaxResultLength = 600;
-
-            List<string> messages = ExtractMeaningfulErrorMessages(ex, true);
-            if (messages.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            for (int mi = 0; mi < messages.Count; mi++)
-            {
-                messages[mi] = GetExceptionMessageReplacement(messages[mi]);
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            if (messages.Count > 1)
-            {
-                sb.AppendLine("Several errors occur:");
-                foreach (string msg in messages)
-                {
-                    sb.AppendLine($"* {msg}");
-                    if (sb.Length >= MaxResultLength)
-                    {
-                        break;
-                    }
-                }
-            } else
-            {
-                Debug.Assert(messages.Count == 1);
-                sb.Append(messages[0]);
-            }
-
-            if (sb.Length >= MaxResultLength)
-            {
-                sb.Length = MaxResultLength - 3;
-                sb.Append("...");
-            }
-            string ret = sb.ToString();
-            return ret;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="lstName"></param>
-        /// <param name="lst"></param>
-        /// <param name="indexShift"></param>
-        public static void WriteList<T>(string lstName, IEnumerable<T> lst, int indexShift = 0)
-        {
-            Console.WriteLine(lstName);
-            int i = 0;
-            foreach (T item in lst)
-            {
-                Console.WriteLine($"{i + indexShift}. {item}");
-                i++;
-            }
-            if (i == 0)
-            {
-                Console.WriteLine("None.");
-            }
-            //Console.WriteLine();
-        }
     }
 }
